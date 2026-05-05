@@ -1,0 +1,11 @@
+.cm-editor {
+  height: 100%;
+}
+
+.cm-scroller {
+  height: 100%;
+}
+
+.cm-content {
+  font-size: 16px;
+}
