@@ -1,11 +1,27 @@
-.cm-editor {
+html,
+body,
+#root {
   height: 100%;
 }
 
-.cm-scroller {
-  height: 100%;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-.cm-content {
-  font-size: 16px;
+.preview-pane table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.preview-pane th,
+.preview-pane td {
+  border: 1px solid #ccc;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.preview-pane th {
+  background: #f4f4f4;
 }

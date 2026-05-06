@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# automerge 작업중 파일
+.claude/
+plan.md
+plan.pdf
