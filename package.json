@@ -4,7 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev:sync": "node server/index.mjs",
+    "dev:web": "vite",
+    "dev": "concurrently -n sync,web -c blue,green \"npm:dev:sync\" \"npm:dev:web\"",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -12,6 +14,7 @@
   "dependencies": {
     "@automerge/automerge-codemirror": "^0.2.0",
     "@automerge/automerge-repo": "^2.5.5",
+    "@automerge/automerge-repo-network-websocket": "^2.5.5",
     "@automerge/react": "^2.5.5",
     "@codemirror/commands": "^6.10.3",
     "@codemirror/lang-markdown": "^6.5.0",
@@ -33,6 +36,7 @@
     "remark-math": "^6.0.0"
   },
   "devDependencies": {
+    "@automerge/automerge-repo-storage-nodefs": "^2.5.5",
     "@automerge/automerge-repo-sync-server": "^0.2.8",
     "@eslint/js": "^10.0.1",
     "@types/node": "^24.12.2",
@@ -44,10 +48,11 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.5.0",
+    "rollup": "^4.60.3",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.58.2",
     "vite": "^8.0.10",
-    "vite-plugin-top-level-await": "^1.6.0",
-    "vite-plugin-wasm": "^3.6.0"
+    "vite-plugin-wasm": "^3.6.0",
+    "ws": "^8.20.0"
   }
 }
