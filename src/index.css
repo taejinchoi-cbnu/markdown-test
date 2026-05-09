@@ -18,7 +18,7 @@ body, #root {
 
 /* Yjs Collaborative Selection & Cursor Styles */
 .cm-ySelection {
-  opacity: 0.3 !important;
+  /* opacity: 0.3 !important; */
 }
 
 .cm-ySelectionInfo {
@@ -39,7 +39,7 @@ body, #root {
   transition: opacity 0.3s ease-in-out;
 }
 
-.cm-yCursor {
+.cm-ySelectionCaret {
   position: absolute;
   border-left: 2px solid;
   border-right: none;

@@ -1,5 +1,6 @@
 import * as Y from "yjs";
 import { WebSocketServer } from "ws";
+import * as awarenessProtocol from "y-protocols/awareness.js";
 
 const wss = new WebSocketServer({ 
   port: 1234,
@@ -7,16 +8,44 @@ const wss = new WebSocketServer({
 });
 
 const docs = new Map();
-
-function getDoc(name) {
-  if (!docs.has(name)) {
-    docs.set(name, new Y.Doc());
-  }
-  return docs.get(name);
-}
-
-// 각 연결에 대한 정보(어떤 방에 있는지)를 저장하여 브로드캐스트 시 사용
+const awarenessStates = new Map();
+const wsToClientIds = new Map(); // ws -> Set<number>
 const connections = new Map();
+
+function getDocAndAwareness(name) {
+  if (!docs.has(name)) {
+    const doc = new Y.Doc();
+    const awareness = new awarenessProtocol.Awareness(doc);
+    
+    // Server listens to awareness updates and broadcasts them
+    awareness.on("update", ({ added, updated, removed }, origin) => {
+      // Track clientIDs for the WebSocket that sent the update (origin)
+      if (origin && typeof origin !== "string") {
+        let clientIds = wsToClientIds.get(origin);
+        if (!clientIds) {
+          clientIds = new Set();
+          wsToClientIds.set(origin, clientIds);
+        }
+        added.forEach(id => clientIds.add(id));
+        updated.forEach(id => clientIds.add(id));
+        removed.forEach(id => clientIds.delete(id));
+      }
+
+      const changedClients = added.concat(updated, removed);
+      const update = awarenessProtocol.encodeAwarenessUpdate(awareness, changedClients);
+      
+      wss.clients.forEach(client => {
+        if (client !== origin && connections.get(client) === name && client.readyState === 1) {
+          client.send(JSON.stringify({ type: "awareness", update: Array.from(update) }));
+        }
+      });
+    });
+
+    docs.set(name, doc);
+    awarenessStates.set(name, awareness);
+  }
+  return { doc: docs.get(name), awareness: awarenessStates.get(name) };
+}
 
 wss.on("connection", (ws) => {
   let roomName = null;
@@ -36,7 +65,7 @@ wss.on("connection", (ws) => {
       if (msg.type === "join") {
         roomName = msg.doc;
         connections.set(ws, roomName);
-        const doc = getDoc(roomName);
+        const { doc, awareness } = getDocAndAwareness(roomName);
 
         // 초기 상태 전송
         const state = Y.encodeStateAsUpdate(doc);
@@ -47,21 +76,29 @@ wss.on("connection", (ws) => {
           })
         );
 
+        // 현재 Awareness 상태 전송 (Fix 1)
+        const awarenessUpdate = awarenessProtocol.encodeAwarenessUpdate(awareness, Array.from(awareness.getStates().keys()));
+        ws.send(
+          JSON.stringify({
+            type: "awareness",
+            update: Array.from(awarenessUpdate),
+          })
+        );
+
         console.log(`[SERVER] User joined room: ${roomName}`);
       } else if (msg.type === "update") {
         if (roomName) {
-          const doc = getDoc(roomName);
+          const doc = docs.get(roomName);
           const update = new Uint8Array(msg.update);
           Y.applyUpdate(doc, update);
-          console.log(`[SERVER] Broadcast update in ${roomName}`);
-          // 다른 클라이언트에게 전달
           broadcast({ type: "update", update: msg.update }, ws);
         }
       } else if (msg.type === "awareness") {
         if (roomName) {
-          console.log(`[SERVER] Broadcast awareness in ${roomName}`);
-          // Awareness 데이터는 서버에 저장할 필요 없이 즉시 브로드캐스트
-          broadcast({ type: "awareness", update: msg.update }, ws);
+          const awareness = awarenessStates.get(roomName);
+          const update = new Uint8Array(msg.update);
+          // applyAwarenessUpdate will trigger the "update" event above
+          awarenessProtocol.applyAwarenessUpdate(awareness, update, ws);
         }
       }
     } catch (e) {
@@ -70,7 +107,19 @@ wss.on("connection", (ws) => {
   });
 
   ws.on("close", () => {
+    const room = connections.get(ws);
     connections.delete(ws);
+    
+    // Clean up awareness (Fix 2)
+    const clientIds = wsToClientIds.get(ws);
+    if (clientIds && room) {
+      const awareness = awarenessStates.get(room);
+      if (awareness) {
+        awarenessProtocol.removeAwarenessStates(awareness, Array.from(clientIds), ws);
+      }
+    }
+    wsToClientIds.delete(ws);
+    
     console.log(`User left room: ${roomName}`);
   });
 });

@@ -6,6 +6,7 @@ import { yText, awareness } from "../crdt";
 interface UserState {
   name: string;
   color: string;
+  clientID: number;
 }
 
 export function SplitView() {
@@ -21,10 +22,10 @@ export function SplitView() {
     const awarenessObserver = () => {
       const states = awareness.getStates();
       const userList: UserState[] = [];
-      states.forEach((state) => {
-        const user = state.user as UserState | undefined;
+      states.forEach((state, clientID) => {
+        const user = state.user as { name: string; color: string } | undefined;
         if (user) {
-          userList.push(user);
+          userList.push({ ...user, clientID });
         }
       });
       setUsers(userList);
@@ -41,8 +42,8 @@ export function SplitView() {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <div style={{ padding: "8px", background: "#333", display: "flex", gap: "8px" }}>
-        {users.map((u, i) => (
-          <span key={i} style={{ color: u.color, fontSize: "12px", border: `1px solid ${u.color}`, padding: "2px 6px", borderRadius: "4px" }}>
+        {users.map((u) => (
+          <span key={u.clientID} style={{ color: u.color, fontSize: "12px", border: `1px solid ${u.color}`, padding: "2px 6px", borderRadius: "4px" }}>
             ● {u.name}
           </span>
         ))}

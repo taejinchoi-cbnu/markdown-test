@@ -3,14 +3,17 @@ import * as Y from "yjs";
 import { Awareness } from "y-protocols/awareness";
 
 // Mock WebSocket
-global.WebSocket = vi.fn().mockImplementation(() => ({
+const MockWS = vi.fn().mockImplementation(() => ({
   send: vi.fn(),
   onopen: vi.fn(),
   onmessage: vi.fn(),
   onclose: vi.fn(),
   onerror: vi.fn(),
+  close: vi.fn(),
   readyState: 1, // OPEN
-})) as unknown as { new (url: string): WebSocket };
+}));
+Object.assign(MockWS, { CONNECTING: 0, OPEN: 1, CLOSING: 2, CLOSED: 3 });
+globalThis.WebSocket = MockWS as unknown as typeof WebSocket;
 
 describe("Yjs CRDT & Awareness Logic", () => {
   let doc: Y.Doc;
