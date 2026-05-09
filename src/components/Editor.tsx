@@ -1,14 +1,11 @@
-import { useDocHandle } from "@automerge/react";
-import { automergeSyncPlugin } from "@automerge/automerge-codemirror";
+import { useMemo } from "react";
+import { yCollab } from "y-codemirror.next";
 import { useEditor } from "../hooks/useEditor";
-import type { AutomergeUrl } from "@automerge/automerge-repo";
+import { yText, awareness } from "../crdt";
 
-export function Editor({ docUrl }: { docUrl: AutomergeUrl }) {
-  const handle = useDocHandle<{ text: string }>(docUrl, { suspense: true });
-  const { containerRef, viewRef } = useEditor(
-    [automergeSyncPlugin({ handle, path: ["text"] })],
-    handle.doc()?.text ?? "",
-  );
+export function Editor() {
+  const extensions = useMemo(() => [yCollab(yText, awareness)], []);
+  const { containerRef, viewRef } = useEditor(extensions, "");
   return (
     <div
       ref={containerRef}
