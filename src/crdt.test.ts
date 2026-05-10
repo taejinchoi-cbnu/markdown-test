@@ -1,0 +1,37 @@
+import { describe, it, beforeEach, vi, expect } from "vitest";
+import * as Y from "yjs";
+import { Awareness } from "y-protocols/awareness";
+
+// Mock WebSocket
+const MockWS = vi.fn().mockImplementation(() => ({
+  send: vi.fn(),
+  onopen: vi.fn(),
+  onmessage: vi.fn(),
+  onclose: vi.fn(),
+  onerror: vi.fn(),
+  close: vi.fn(),
+  readyState: 1, // OPEN
+}));
+Object.assign(MockWS, { CONNECTING: 0, OPEN: 1, CLOSING: 2, CLOSED: 3 });
+globalThis.WebSocket = MockWS as unknown as typeof WebSocket;
+
+describe("Yjs CRDT & Awareness Logic", () => {
+  let doc: Y.Doc;
+  let awareness: Awareness;
+
+  beforeEach(() => {
+    doc = new Y.Doc();
+    awareness = new Awareness(doc);
+  });
+
+  it("should initialize awareness with local client id", () => {
+    expect(awareness.clientID).toBeTypeOf("number");
+  });
+
+  it("should allow setting local state with user info", () => {
+    const userInfo = { name: "Test User", color: "#ff0000" };
+    awareness.setLocalStateField("user", userInfo);
+    
+    expect(awareness.getLocalState()?.user).toEqual(userInfo);
+  });
+});

@@ -7,9 +7,5 @@ export default defineConfig({
   worker: { format: "es", plugins: () => [wasm()] },
   optimizeDeps: {
     include: ["remark-gfm"],
-    exclude: [
-      "@automerge/automerge-wasm",
-      "@automerge/automerge-wasm/bundler/bindgen_bg.wasm",
-    ],
   },
 });
