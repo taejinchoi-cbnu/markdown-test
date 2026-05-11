@@ -5,6 +5,8 @@ import {
   applyAwarenessUpdate,
 } from "y-protocols/awareness";
 
+export const ROOM_NAME = "room1";
+
 export const doc = new Y.Doc();
 export const yText = doc.getText("codemirror");
 export const awareness = new Awareness(doc);
@@ -33,7 +35,7 @@ ws.onopen = () => {
   ws.send(
     JSON.stringify({
       type: "join",
-      doc: "room1",
+      doc: ROOM_NAME,
     })
   );
 };
